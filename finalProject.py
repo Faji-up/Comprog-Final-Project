@@ -42,13 +42,12 @@ product_list = []
 info = []
 product_index = 0
 products_user_list = {}
-ind = 0
+ind = 1
 
 cart_list = {}
-list_p = []
-list_a = []
 trans_code = "qwertyuiopasdfghjklzxcvbnm1234567890"
 
+num = 0
 #
 date = datetime.now().date()
 _time = time.localtime(time.time())
@@ -62,6 +61,11 @@ position_y = 1
 def open_id_image():
     global id_picture
     id_picture = filedialog.askopenfilename()
+
+
+def upload_image_function():
+    global product_img
+    product_img = filedialog.askopenfilename()
 
 
 ############ ACCOUNTS
@@ -125,12 +129,18 @@ class Accounts():
 
     def add_product(self, product_img, product_name, product_price, product_stock, seller_contact):
         global user_index
-        product = Products(product_img, product_name, product_price, product_stock, seller_contact, user_index).save()
-        self.prodcut_list.append(product)
+        global num
+        product = Products(product_img, product_name, product_price, product_stock, seller_contact, user_index,num)
+        product.save()
+        accounts_list[user_index].prodcut_list.append(product)
+        window.update()
 
     def show_products(self):
         for items in self.prodcut_list:
-            items.show()
+            if items == None:
+                pass
+            else:
+                items.show()
 
     def unshow_my_products(self):
         for items in self.prodcut_list:
@@ -149,27 +159,16 @@ class Accounts():
 
     def show_user_products(self):
         global user_index
-        conn = sqlite3.connect("Products.db")
-        c = conn.cursor()
-        c.execute("SELECT * FROM products WHERE product_index =?", (user_index))
-
-        for prod in c.fetchall():
-            conatainer = LabelFrame(user_products_frame)
-            img = Image.open(io.BytesIO(prod[1]))
-            img = img.resize((60, 60))
-            img = ImageTk.PhotoImage(img)
-            picture = Label(conatainer, image=img)
-            prod_info = Label(conatainer, text=f"Type: {prod[2]} Price: {prod[3]} Stock: {prod[4]} Contact: {prod[5]}")
-
-            conatainer.pack()
-            picture.pack()
-            prod_info.pack()
-        conn.commit()
-        conn.close()
+        for items in self.prodcut_list:
+            if items == None:
+                pass
+            else:
+                items.show_my_product()
+                window.update()
 
     def show_my_transaction(self, name):
         if name == self.name:
-            for items in self.prodcut_list:
+            for items in accounts_list[user_index].prodcut_list:
                 for carts in items.transaction_list:
                     carts.pack()
         else:
@@ -182,20 +181,21 @@ class Accounts():
 
 
 class Products(Accounts):
-    def __init__(self, product_img, product_type, product_price, product_stock, seller_contact, product_index):
+    def __init__(self, product_imgg, product_type, product_price, product_stock, seller_contact, product_index, id_num):
         global user_index
         global position_y
         global date
-        super().__init__(accounts_list[user_index].get_img(),
+        global product_img
+        super().__init__(accounts_list[user_index].get_id(),
                          accounts_list[user_index].get_user_name(),
                          accounts_list[user_index].get_age(),
                          accounts_list[user_index].get_user_address(),
                          accounts_list[user_index].get_username(),
-                         accounts_list[user_index].get_password(),
-                         accounts_list[user_index].get_id())
+                         accounts_list[user_index].get_password())
         # products components
 
-        self.product_image = product_img
+        self.product_image = product_imgg
+        self.id_num = id_num
         self.product_type = product_type
         self.product_price = int(product_price)
         self.product_stock = int(product_stock)
@@ -209,12 +209,15 @@ class Products(Accounts):
 
         # products frame, labels and buttons
         self.product_container = LabelFrame(product_frame)
-        self.product_address_f = Label(self.product_container, text=self.seller_address)
         self.product_contact_f = Label(self.product_container, text=self.seller_contact)
-        self.product_quan_f = Label(self.product_container, text=str(self.product_quan))
+        self.product_contact_f.text = self.seller_contact
+        self.product_quan_f = Label(self.product_container, text=str(self.product_stock))
+        self.product_quan_f.text = str(self.product_stock)
         self.product_price_f = Label(self.product_container, text=self.product_price)
+        self.product_price_f.text = self.product_price
         self.product_image_f = Label(self.product_container, image=self.product_image)
-        self.product_name_f = Label(self.product_container, text=self.product_name)
+        self.product_image_f.text = self.product_image
+        self.product_name_f = Label(self.product_container, text=self.product_type)
         self.product_dt_f = Label(self.product_container,
                                   text=f"DATE POSTED: {self.date_posted}\nTIME: {self.time_posted}")
         self.product_container.bind('<Enter>', self.wide_view)
@@ -232,7 +235,7 @@ class Products(Accounts):
         self.transaction_list = []
 
         self.frame = Frame(user_frame)
-        self.label = Label(self.frame, image=self.img)
+        self.label = Label(self.frame, image=self.id_pic)
 
         self.button_exit_prof = Button(self.frame, command=self.profile_unview, text="X")
 
@@ -244,14 +247,12 @@ class Products(Accounts):
 
         # myproducts frame
         self.myproduct_container = LabelFrame(user_products_frame)
-        self.myproduct_address_f = Label(self.myproduct_container, text=self.seller_address)
-        self.myproduct_contact_f = Label(self.myproduct_container, text=self.seller_contact)
-        self.myproduct_quan_f = Label(self.myproduct_container, text=str(self.product_stock))
-        self.myproduct_price_f = Label(self.myproduct_container, text=str(self.product_price))
         self.myproduct_image_f = Label(self.myproduct_container, image=self.product_image)
-        self.myproduct_name_f = Label(self.myproduct_container, text=self.product_type)
+        self.my_Pinfo = Label(self.myproduct_container,
+                              text=f"Type: {self.product_type} Price: {self.product_price} Stock: {self.product_stock}")
         self.selfindex = product_index
-        self.remove_button = Button(self.myproduct_container, text='remove')
+        self.remove_button = Button(self.myproduct_container, text='remove',
+                                    command=lambda: self.remove_product())
 
         # date delivever
         self.time_of_deliver = datetime.now().date().today() + timedelta(days=(int(_time.tm_wday) + 5))
@@ -261,11 +262,13 @@ class Products(Accounts):
         global product_img
         conn = sqlite3.connect("Products.db")
         c = conn.cursor()
-        with open(product_img,'rb') as image_file:
+        with open(product_img, 'rb') as image_file:
             img = image_file.read()
         product = [sqlite3.Binary(img), self.product_type, self.product_price, self.product_stock,
                    self.seller_contact, self.product_index]
-        c.execute("INSERT INTO products VALUES (?,?,?,?,?,?)", product)
+        c.executemany(
+            "INSERT INTO  products (product_img,product_type,product_price,product_stock,seller_contact,product_index) VALUES (?,?,?,?,?,?)",
+            (product,))
 
         conn.commit()
         conn.close()
@@ -282,7 +285,6 @@ class Products(Accounts):
         self.product_name_f.pack()
         self.product_price_f.pack()
         self.product_quan_f.pack()
-        self.product_address_f.pack()
         self.product_contact_f.pack()
         self.product_dt_f.pack()
         self.buy_button.config(command=lambda: self._add_tocart())
@@ -295,11 +297,7 @@ class Products(Accounts):
     def unshow(self):
         self.product_dt_f.pack_forget()
         self.myproduct_image_f.pack_forget()
-        self.myproduct_name_f.pack_forget()
-        self.myproduct_price_f.pack_forget()
-        self.myproduct_quan_f.pack_forget()
-        self.myproduct_address_f.pack_forget()
-        self.myproduct_contact_f.pack_forget()
+        self.my_Pinfo.pack_forget()
         self.myproduct_container.pack_forget()
         self.remove_button.pack_forget()
 
@@ -309,11 +307,7 @@ class Products(Accounts):
 
     def show_my_product(self):
         self.myproduct_image_f.pack()
-        self.myproduct_name_f.pack()
-        self.myproduct_price_f.pack()
-        self.myproduct_quan_f.pack()
-        self.myproduct_address_f.pack()
-        self.myproduct_contact_f.pack()
+        self.my_Pinfo.pack()
         self.myproduct_container.pack()
         self.remove_button.pack()
 
@@ -342,11 +336,13 @@ class Products(Accounts):
         amount.config(text=str('PHP' + str(self.product_price)))
 
         new_quan = StringVar()
-        quan_menu.config(textvariable=new_quan, from_=0, to=self.product_quan)
+        quan_menu.config(textvariable=new_quan, from_=0, to=self.product_stock)
 
         buy_button.config(command=lambda: self.tran(new_quan.get()), text="BUY")
 
     def tran(self, new_quan):
+        conn = sqlite3.connect("Products.db")
+        c = conn.cursor()
         ask = messagebox.askyesno("info", "are you sure to buy this product?")
         if ask:
             global trans_code
@@ -355,11 +351,11 @@ class Products(Accounts):
 
             for i in range(5):
                 code += str(trans_code[random.randint(0, 35)])
-            self.product_quan -= int(new_quan)
-            self.product_quan_f.config(text=str(self.product_quan))
-            self.myproduct_quan_f.config(text=(str(self.product_quan)))
+            self.product_stock -= int(new_quan)
+            self.product_quan_f.config(text=str(self.product_stock))
+            self.myproduct_quan_f.config(text=(str(self.product_stock)))
 
-            print(self.product_quan)
+            print(self.product_stock)
             window.update()
             if self.product_stock <= 0:
                 self.product_stock_f.config(text='sold out')
@@ -389,6 +385,8 @@ class Products(Accounts):
                 str(f"Product:{self.product_type} | Seller:{self.get_user_name()} | Price:{self.product_price} >> Buyer:{accounts_list[user_index].get_user_name()} | Payment:{payment} | TRANSACTION CODE:{code}"))
         else:
             pass
+        conn.commit()
+        conn.close()
 
     def profile_view(self):
         product_frame.pack_forget()
@@ -407,7 +405,7 @@ class Products(Accounts):
         pass
 
     def get_name(self):
-        return self.product_name
+        return self.product_type
 
     def get_pro_date(self):
         return f"{self.date_posted}| {self.time_posted}"
@@ -419,7 +417,16 @@ class Products(Accounts):
         return self.product_price
 
     def remove_product(self):
-        self.product_container.destroy()
+        self.myproduct_container.pack_forget()
+        conn = sqlite3.connect("Products.db")
+        c = conn.cursor()
+        delete = f"DElETE FROM products WHERE id={self.id_num}"
+        c.execute(delete)
+        rev(num)
+        print(num)
+        conn.commit()
+        conn.close()
+        window.update()
 
     def get_address(self):
         return self.seller_address
@@ -428,31 +435,35 @@ class Products(Accounts):
         return self.seller_contact
 
     def get_quan(self):
-        return self.product_quan
+        return self.product_stock
 
 
 ################################################################
 
-def save_product(product_image, product_name, product_price, product_quan,seller_contact):
+def save_product(product_imagee, product_name, product_price, product_quan, seller_contact):
     global product_index
     global product_frame
-
-    if not (
-    product_validation(product_image, product_name, product_price, product_quan,seller_contact)):
-        accounts_list[user_index].add_product(product_image,
+    global num
+    global product_img
+    if (
+            product_validation(product_imagee, product_name, product_price, product_quan, seller_contact)):
+        img = Image.open(product_img)
+        img = img.resize((40, 40))
+        img = ImageTk.PhotoImage(img)
+        accounts_list[user_index].add_product(img,
                                               product_name,
                                               product_price,
                                               product_quan,
                                               seller_contact,
                                               )
-        upload_name_of_product.delete(0,END)
-        upload_price.delete(0,END)
-        upload_stock.delete(0,END)
-        upload_contact.delete(0,END)
+        num += 1
+        upload_name_of_product.delete(0, END)
+        upload_price.delete(0, END)
+        upload_stock.delete(0, END)
+        upload_contact.delete(0, END)
 
     else:
         return messagebox.showerror('error', 'error')
-
 
 
 def product_validation(product_img, product_type, product_price, product_stock, seller_con):
@@ -462,9 +473,10 @@ def product_validation(product_img, product_type, product_price, product_stock, 
         return True
 
 
-def upload_image_function():
-    global product_img
-    product_img = filedialog.askopenfilename()
+def rev(indexx):
+    print(indexx)
+    accounts_list[user_index].prodcut_list.remove(accounts_list[user_index].prodcut_list[indexx-1])
+    window.update()
 
 
 #######################  SAVE ACCOUNT
@@ -524,6 +536,7 @@ def admin():
         imgs = ImageTk.PhotoImage(imga)
         container = LabelFrame(users_frame)
         pro_img = Label(container, image=imgs)
+        pro_img.image = imgs
         infos = Label(container, text=f"NO# {acc[0]} Name: {acc[2]} Age: {acc[3]} Address: {acc[4]}")
         container.pack()
         pro_img.pack()
@@ -581,20 +594,12 @@ def user():
 def home():
     log_in_canvas.pack_forget()
     user_frame.pack(fill=BOTH, expand=True)
-    for items in range(len(list_a)):
-        for x in list_a[items].prodcut_list:
-            x.product_container.pack()
+    for items in range(len(accounts_list)):
+        accounts_list[items].show_products()
 
     # display user data such as cart,products and transaction hirtory
-    for items in range(len(list_a)):
-        if items == user_index:
-            list_a[items].show_cart()
-            list_a[items].show_user_products()
-            list_a[items].show_my_transaction(list_a[user_index].get_user_name())
-        else:
-            list_a[items].unshow_cart()
-            list_a[items].unshow_my_products()
-            list_a[items].unshow_my_transaction()
+    for item in accounts_list[user_index].prodcut_list:
+        item.show_user_products()
 
 
 def show_products(event):
@@ -622,11 +627,12 @@ def myproducts(event):
     user_transaction_frame.pack_forget()
     sell_frame.pack_forget()
 
-    for items in range(len(list_a)):
-        if items == user_index:
-            list_a[items].show_user_products()
+    for items in accounts_list:
+        if items == accounts_list[user_index] and len(accounts_list[user_index].prodcut_list) != 0:
+            items.show_user_products()
+            window.update()
         else:
-            list_a[items].unshow_my_products()
+            items.unshow_my_products()
 
     user_products_frame.pack(expand=True, fill=BOTH)
 
@@ -713,6 +719,8 @@ def profile(event):
 def user_log_out(event):
     cart_frame.pack_forget()
     user_frame.pack_forget()
+    for items in accounts_list:
+        items.unshow_my_products
     welcome()
 
 
@@ -731,40 +739,50 @@ def center_window(window, width, height, ):
 
 
 ################################################################
-
-def welcome():
+def restore():
     global accounts_list
+    global num
 
     products_list = []
 
     conn = sqlite3.connect("Accounts.db")
     conn2 = sqlite3.connect("Products.db")
     c = conn.cursor()
-    c2 = conn.cursor()
+    c2 = conn2.cursor()
     # c2.execute("CREATE TABLE IF NOT EXISTS products (product_img BLOB,product_type text,product_price INTEGER,product_stock INTEGER,product_index INTEGER)")
     c.execute("SELECT * FROM accounts")
     c2.execute("SELECT * FROM products")
     index = 0
+
     for acc in c.fetchall():
         img = Image.open(io.BytesIO(acc[1]))
         img = img.resize((60, 60))
         img = ImageTk.PhotoImage(img)
         account = Accounts(img, acc[2], acc[3], acc[4], acc[5], acc[6])
         accounts_list.append(account)
-
+        print(accounts_list[index].get_user_name())
+        index += 1
+    for i in range(len(accounts_list)):
         for prod in c2.fetchall():
-            if prod[5] == index:
-                img = Image.open(io.BytesIO(prod[0]))
+            print(type(prod[5]))
+            if prod[6] == i:
+                img = Image.open(io.BytesIO(prod[1]))
                 img = img.resize((60, 60))
                 img = ImageTk.PhotoImage(img)
-                accounts_list[index].add_product(img, prod[1], prod[2], prod[3], prod[4], prod[5])
+                product = Products(img, prod[2], prod[3], prod[4], prod[5], i, prod[0])
+                print(prod[0])
+                accounts_list[i].prodcut_list.append(product)
+                print(accounts_list[i].prodcut_list[i].get_name())
+                num += 1
+                print(num)
 
-            else:
-                pass
-        index += 1
+            conn.commit()
 
     c.close()
     c2.close()
+
+
+def welcome():
     home_canvas.pack(expand=True, fill=BOTH)
 
 
@@ -779,11 +797,15 @@ def log_in_validation():
     c = conn.cursor()
     c.execute("SELECT * FROM accounts")
     if log_in_username.get() == "admin" and log_in_password.get() == 'admin':
+        log_in_password.delete(0, END)
+        log_in_username.delete(0, END)
         admin()
     else:
         for acc in c.fetchall():
             if log_in_username.get() == acc[5] and log_in_password.get() == acc[6]:
                 user_index = acc[0] - 1
+                log_in_password.delete(0, END)
+                log_in_username.delete(0, END)
                 home()
                 break
 
@@ -1046,9 +1068,8 @@ log_out.bind('<Button>', user_log_out)
 
 sell_frame = Frame(user_frame, bg='yellow')
 
-upload_image = Button(sell_frame, command=lambda: upload_image_function(),text="Product image")
+upload_image = Button(sell_frame, command=lambda: upload_image_function(), text="Product image")
 upload_image.pack()
-
 
 upload_name_of_product = Entry(sell_frame)
 upload_name_of_product.pack()
@@ -1065,7 +1086,7 @@ upload_contact.pack()
 
 upload_product = Button(sell_frame,
                         command=lambda: save_product(product_img, upload_name_of_product.get(), upload_price.get(),
-                                                     upload_stock.get(), upload_contact.get()),text="Uplaod")
+                                                     upload_stock.get(), upload_contact.get()), text="Uplaod")
 upload_product.pack()
 ########################## CART WINDOW FRAME
 
@@ -1410,6 +1431,7 @@ home_con_button.place(x=220, y=515)
 ################################################################
 
 if __name__ == '__main__':
+    restore()
     welcome()
 
 window.mainloop()
