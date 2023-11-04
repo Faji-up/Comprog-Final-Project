@@ -34,39 +34,27 @@ user_index = 0
 
 ######################### LISTS
 transaction_list = []
-accounts = []
-users_LIST = []
-products = []
 user_info = []
-product_list = []
 info = []
 product_index = 0
 products_user_list = {}
 ind = 1
-
 cart_list = {}
 trans_code = "qwertyuiopasdfghjklzxcvbnm1234567890"
-
 num = 0
-#
 date = datetime.now().date()
 _time = time.localtime(time.time())
-
 position_x = 200
 position_y = 1
-
-
-########################## BSU LOGO
+prd_key = 0
 ################################################################
 def open_id_image():
     global id_picture
     id_picture = filedialog.askopenfilename()
 
-
 def upload_image_function():
     global product_img
     product_img = filedialog.askopenfilename()
-
 
 ############ ACCOUNTS
 class Accounts():
@@ -78,6 +66,7 @@ class Accounts():
         self.id_pic = id_pic
         self.age = age
         self.prodcut_list = []
+        self.product_indx = 0
 
         self.date = datetime.now().date()
 
@@ -128,12 +117,13 @@ class Accounts():
         return self.id_pic
 
     def add_product(self, product_img, product_name, product_price, product_stock, seller_contact):
+        global prd_key
         global user_index
-        global num
-        product = Products(product_img, product_name, product_price, product_stock, seller_contact, user_index,num)
+        product = Products(product_img, product_name, product_price, product_stock, seller_contact, user_index,prd_key,self.product_indx)
         product.save()
         accounts_list[user_index].prodcut_list.append(product)
         window.update()
+        self.product_indx+=1
 
     def show_products(self):
         for items in self.prodcut_list:
@@ -181,7 +171,7 @@ class Accounts():
 
 
 class Products(Accounts):
-    def __init__(self, product_imgg, product_type, product_price, product_stock, seller_contact, product_index, id_num):
+    def __init__(self, product_imgg, product_type, product_price, product_stock, seller_contact, product_index, id_num,prd_indx):
         global user_index
         global position_y
         global date
@@ -193,7 +183,7 @@ class Products(Accounts):
                          accounts_list[user_index].get_username(),
                          accounts_list[user_index].get_password())
         # products components
-
+        self.prd_indx = prd_indx
         self.product_image = product_imgg
         self.id_num = id_num
         self.product_type = product_type
@@ -422,8 +412,8 @@ class Products(Accounts):
         c = conn.cursor()
         delete = f"DElETE FROM products WHERE id={self.id_num}"
         c.execute(delete)
-        rev(num)
-        print(num)
+        rev(self.product_indx)
+       
         conn.commit()
         conn.close()
         window.update()
@@ -441,7 +431,7 @@ class Products(Accounts):
 ################################################################
 
 def save_product(product_imagee, product_name, product_price, product_quan, seller_contact):
-    global product_index
+
     global product_frame
     global num
     global product_img
@@ -742,6 +732,7 @@ def center_window(window, width, height, ):
 def restore():
     global accounts_list
     global num
+    global prd_key
 
     products_list = []
 
@@ -769,15 +760,20 @@ def restore():
                 img = Image.open(io.BytesIO(prod[1]))
                 img = img.resize((60, 60))
                 img = ImageTk.PhotoImage(img)
-                product = Products(img, prod[2], prod[3], prod[4], prod[5], i, prod[0])
+                product = Products(img, prod[2], prod[3], prod[4], prod[5], i, prod[0],accounts_list[i].product_indx)
                 print(prod[0])
                 accounts_list[i].prodcut_list.append(product)
                 print(accounts_list[i].prodcut_list[i].get_name())
-                num += 1
-                print(num)
+                accounts_list[i].product_indx +=1
+                if prod[0] > prd_key:
+                    prd_key = prod[0]
+                else:
+                    pass
+
+
 
             conn.commit()
-
+    prd_key +=1
     c.close()
     c2.close()
 
