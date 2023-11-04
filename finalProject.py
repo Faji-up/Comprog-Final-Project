@@ -325,9 +325,10 @@ class Products(Accounts):
         self.myproduct_container.pack_forget()
 
     def show_my_product(self):
-        conn = sqlite3.connect("Products.db")
-        c = conn.cursor()
+
         if self.product_stock <= 0:
+            conn = sqlite3.connect("Products.db")
+            c = conn.cursor()
             delete = f"DElETE FROM products WHERE id={self.id_num}"
             c.execute(delete)
             conn.commit()
@@ -338,13 +339,10 @@ class Products(Accounts):
             conn.commit()
             conn.close()
         else:
-            pass
-
-        self.myproduct_image_f.pack()
-        self.my_Pinfo.pack()
-        self.myproduct_container.pack()
-        self.remove_button.pack()
-
+            self.myproduct_image_f.pack()
+            self.my_Pinfo.pack()
+            self.myproduct_container.pack()
+            self.remove_button.pack()
     def wide_view(self, event):
 
         self.buy_button.pack()
@@ -578,6 +576,7 @@ def admin():
     admin_frame.pack(expand=True, fill=BOTH)
 
     conn = sqlite3.connect('Accounts.db')
+
     c = conn.cursor()
 
     c.execute("SELECT * FROM accounts ")
@@ -597,7 +596,12 @@ def admin():
     # user_infos.pack()
     conn.commit()
     conn.close()
-
+    for acc in range(len(accounts_list)):
+        for prod in accounts_list[acc].prodcut_list:
+            inv = Label(inven_frame,compound="left",text=f"Seller:{acc.get_user_name()} Type:{prod.get_name()} Price:{prod.get_price()} Stock:{prod.get_quan()}")
+            inv.pack()
+    for items in transaction_list:
+        Label(admin_tran_frame,text=items).pack()
 
 def users(event):
     admin_menu_frame.pack_forget()
@@ -651,8 +655,7 @@ def home():
     # display user data such as cart,products and transaction hirtory
     for item in accounts_list[user_index].prodcut_list:
         item.show_user_products()
-
-
+        item.show_my_transaction(item.get_user_name())
 def show_products(event):
     global products
     sell_frame.pack_forget()
@@ -681,9 +684,11 @@ def myproducts(event):
     for items in accounts_list:
         if items == accounts_list[user_index] and len(accounts_list[user_index].prodcut_list) != 0:
             items.show_user_products()
+            items.show_my_transaction(items.get_user_name())
             window.update()
         else:
             items.unshow_my_products()
+            items.unshow_my_transaction()
 
     user_products_frame.pack(expand=True, fill=BOTH)
 
