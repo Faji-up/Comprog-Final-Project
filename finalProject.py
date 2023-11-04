@@ -284,15 +284,30 @@ class Products(Accounts):
         global product_frame
         product_frame.bind("<Key>", self.move)
         index = user_index
+        conn = sqlite3.connect("Products.db")
+        c = conn.cursor()
+        if self.product_stock <= 0:
+            delete = f"DElETE FROM products WHERE id={self.id_num}"
+            c.execute(delete)
+            conn.commit()
+            conn.close()
+            self.product_quan_f.config(text='sold out')
+            self.my_Pinfo.config(text=f"SOLD OUT")
+            self.buy_button.config(state=DISABLED)
+            self.product_container.pack_forget()
+            self.myproduct_container.pack_forget()
 
-        self.product_image_f.pack()
-        self.product_name_f.pack()
-        self.product_price_f.pack()
-        self.product_quan_f.pack()
-        self.product_contact_f.pack()
-        self.product_dt_f.pack()
-        self.buy_button.config(command=lambda: self._add_tocart())
-        self.product_container.pack()
+        else:
+            self.product_image_f.pack()
+            self.product_name_f.pack()
+            self.product_price_f.pack()
+            self.product_quan_f.pack()
+            self.product_contact_f.pack()
+            self.product_dt_f.pack()
+            self.buy_button.config(command=lambda: self._add_tocart())
+            self.product_container.pack()
+        conn.commit()
+        conn.close()
 
     def move(self, event):
         self.product_container.place(x=200, y=self.product_container.winfo_y() + 10)
@@ -310,6 +325,21 @@ class Products(Accounts):
         self.myproduct_container.pack_forget()
 
     def show_my_product(self):
+        conn = sqlite3.connect("Products.db")
+        c = conn.cursor()
+        if self.product_stock <= 0:
+            delete = f"DElETE FROM products WHERE id={self.id_num}"
+            c.execute(delete)
+            conn.commit()
+            conn.close()
+            self.product_quan_f.config(text='sold out')
+            self.my_Pinfo.config(text=f"SOLD OUT")
+            self.buy_button.config(state=DISABLED)
+            conn.commit()
+            conn.close()
+        else:
+            pass
+
         self.myproduct_image_f.pack()
         self.my_Pinfo.pack()
         self.myproduct_container.pack()
@@ -368,10 +398,10 @@ class Products(Accounts):
             if self.product_stock <= 0:
                 delete = f"DElETE FROM products WHERE id={self.id_num}"
                 c.execute(delete)
-                accounts_list[self.product_index].prodcut_list.remove(self.prd_indx)
+
                 conn.commit()
                 conn.close()
-                self.product_stock_f.config(text='sold out')
+                self.product_quan_f.config(text='sold out')
                 self.my_Pinfo.config(text=f"SOLD OUT")
                 self.buy_button.config(state=DISABLED)
 
@@ -731,11 +761,6 @@ def profile(event):
     profile_NAME.config(text=accounts_list[user_index].get_user_name())
     profile_ADDRES.config(text=accounts_list[user_index].get_user_address())
     profile_AGE.config(text=accounts_list[user_index].get_age())
-
-
-# x = susername.get() + "=" + s_password.get()
-
-#   print(info[0].get(x)['x'])
 
 def user_log_out(event):
     cart_frame.pack_forget()
