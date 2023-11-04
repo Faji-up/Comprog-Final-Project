@@ -345,24 +345,34 @@ class Products(Accounts):
         buy_button.config(command=lambda: self.tran(new_quan.get()), text="BUY")
 
     def tran(self, new_quan):
+        global trans_code
         conn = sqlite3.connect("Products.db")
         c = conn.cursor()
         ask = messagebox.askyesno("info", "are you sure to buy this product?")
         if ask:
-            global trans_code
+
             code = ''
-            quan = self.product_quan
+            quan = self.product_stock
 
             for i in range(5):
                 code += str(trans_code[random.randint(0, 35)])
             self.product_stock -= int(new_quan)
+            change = f"UPDATE products SET product_stock={self.product_stock} WHERE id={self.id_num}"
+            c.execute(change)
+            conn.commit()
             self.product_quan_f.config(text=str(self.product_stock))
-            self.myproduct_quan_f.config(text=(str(self.product_stock)))
+            self.my_Pinfo.config(text=f"Type: {self.product_type} Price: {self.product_price} Stock: {self.product_stock}")
 
             print(self.product_stock)
             window.update()
             if self.product_stock <= 0:
+                delete = f"DElETE FROM products WHERE id={self.id_num}"
+                c.execute(delete)
+                accounts_list[self.product_index].prodcut_list.remove(self.prd_indx)
+                conn.commit()
+                conn.close()
                 self.product_stock_f.config(text='sold out')
+                self.my_Pinfo.config(text=f"SOLD OUT")
                 self.buy_button.config(state=DISABLED)
 
             # save to the cart
