@@ -47,14 +47,19 @@ _time = time.localtime(time.time())
 position_x = 200
 position_y = 1
 prd_key = 0
+product_list = []
+
+
 ################################################################
 def open_id_image():
     global id_picture
     id_picture = filedialog.askopenfilename()
 
+
 def upload_image_function():
     global product_img
     product_img = filedialog.askopenfilename()
+
 
 ############ ACCOUNTS
 class Accounts():
@@ -120,25 +125,26 @@ class Accounts():
         global prd_key
         global user_index
         conn = sqlite3.connect("Products.db")
-        c =  conn.cursor()
+        c = conn.cursor()
         c.execute("SELECT * FROM products")
         key = 0
         for x in c.fetchall():
             key = x[0]
-        print("key = ",key)
+        print("key = ", key)
         if key < prd_key:
             prd_key = key + 1
             print("prd key  change", prd_key)
         conn.commit()
         conn.close()
-        print("prd before adding",prd_key)
-        product = Products(product_img, product_name, product_price, product_stock, seller_contact, user_index,prd_key,self.product_indx)
+        print("prd before adding", prd_key)
+        product = Products(product_img, product_name, product_price, product_stock, seller_contact, user_index, prd_key,
+                           self.product_indx)
         product.save()
         accounts_list[user_index].prodcut_list.append(product)
-        prd_key+=1
-        print("prd after adding ",prd_key)
+        prd_key += 1
+        print("prd after adding ", prd_key)
         window.update()
-        self.product_indx+=1
+        self.product_indx += 1
 
     def show_products(self):
         for items in self.prodcut_list:
@@ -184,8 +190,10 @@ class Accounts():
             for carts in items.transaction_list:
                 carts.pack_forget()
 
+
 class Products(Accounts):
-    def __init__(self, product_imgg, product_type, product_price, product_stock, seller_contact, product_index, id_num,prd_indx):
+    def __init__(self, product_imgg, product_type, product_price, product_stock, seller_contact, product_index, id_num,
+                 prd_indx):
         global user_index
         global position_y
         global date
@@ -343,6 +351,7 @@ class Products(Accounts):
             self.my_Pinfo.pack()
             self.myproduct_container.pack()
             self.remove_button.pack()
+
     def wide_view(self, event):
 
         self.buy_button.pack()
@@ -389,7 +398,8 @@ class Products(Accounts):
             c.execute(change)
             conn.commit()
             self.product_quan_f.config(text=str(self.product_stock))
-            self.my_Pinfo.config(text=f"Type: {self.product_type} Price: {self.product_price} Stock: {self.product_stock}")
+            self.my_Pinfo.config(
+                text=f"Type: {self.product_type} Price: {self.product_price} Stock: {self.product_stock}")
 
             print(self.product_stock)
             window.update()
@@ -459,7 +469,7 @@ class Products(Accounts):
         return self.product_price
 
     def remove_product(self):
-        print("prd remove",self.id_num)
+        print("prd remove", self.id_num)
         self.myproduct_container.pack_forget()
         conn = sqlite3.connect("Products.db")
         c = conn.cursor()
@@ -470,6 +480,7 @@ class Products(Accounts):
         conn.commit()
         conn.close()
         window.update()
+
     def get_address(self):
         return self.seller_address
 
@@ -483,10 +494,10 @@ class Products(Accounts):
 ################################################################
 
 def save_product(product_imagee, product_name, product_price, product_quan, seller_contact):
-
     global product_frame
     global num
     global product_img
+    global product_list
     if (
             product_validation(product_imagee, product_name, product_price, product_quan, seller_contact)):
         img = Image.open(product_img)
@@ -498,6 +509,10 @@ def save_product(product_imagee, product_name, product_price, product_quan, sell
                                               product_quan,
                                               seller_contact,
                                               )
+        prd = Label(inven_frame, img=img,
+                    text=f"Seller:{accounts_list[i].get_user_name()} Type:{prod[2]} Price:{prod[3]} Stock:{prod[4]}",
+                    compound="left")
+        product_list.append(prd)
         num += 1
         upload_name_of_product.delete(0, END)
         upload_price.delete(0, END)
@@ -516,7 +531,7 @@ def product_validation(product_img, product_type, product_price, product_stock, 
 
 
 def rev(indexx):
-    print("remove index",indexx)
+    print("remove index", indexx)
 
     accounts_list[user_index].prodcut_list.remove(accounts_list[user_index].prodcut_list[indexx])
     for item in accounts_list[user_index].prodcut_list:
@@ -524,7 +539,7 @@ def rev(indexx):
             pass
         else:
             item.product_indx -= 1
-    print("new len of list",len(accounts_list[user_index].prodcut_list))
+    print("new len of list", len(accounts_list[user_index].prodcut_list))
     window.update()
 
 
@@ -572,6 +587,7 @@ def sign_in_validation(id_pic, name, age, address, username, password):
 #######################  ADMIN
 
 def admin():
+    global product_list
     log_in_canvas.pack_forget()
     admin_frame.pack(expand=True, fill=BOTH)
 
@@ -596,12 +612,10 @@ def admin():
     # user_infos.pack()
     conn.commit()
     conn.close()
-    for acc in range(len(accounts_list)):
-        for prod in accounts_list[acc].prodcut_list:
-            inv = Label(inven_frame,compound="left",text=f"Seller:{acc.get_user_name()} Type:{prod.get_name()} Price:{prod.get_price()} Stock:{prod.get_quan()}")
-            inv.pack()
+    product_list[0].pack()
     for items in transaction_list:
-        Label(admin_tran_frame,text=items).pack()
+        Label(admin_tran_frame, text=items).pack()
+
 
 def users(event):
     admin_menu_frame.pack_forget()
@@ -656,6 +670,8 @@ def home():
     for item in accounts_list[user_index].prodcut_list:
         item.show_user_products()
         item.show_my_transaction(item.get_user_name())
+
+
 def show_products(event):
     global products
     sell_frame.pack_forget()
@@ -767,6 +783,7 @@ def profile(event):
     profile_ADDRES.config(text=accounts_list[user_index].get_user_address())
     profile_AGE.config(text=accounts_list[user_index].get_age())
 
+
 def user_log_out(event):
     cart_frame.pack_forget()
     user_frame.pack_forget()
@@ -794,6 +811,7 @@ def restore():
     global accounts_list
     global num
     global prd_key
+    global product_list
 
     products_list = []
 
@@ -821,22 +839,24 @@ def restore():
                 img = Image.open(io.BytesIO(prod[1]))
                 img = img.resize((60, 60))
                 img = ImageTk.PhotoImage(img)
-                product = Products(img, prod[2], prod[3], prod[4], prod[5], i, prod[0],accounts_list[i].product_indx)
+                product = Products(img, prod[2], prod[3], prod[4], prod[5], i, prod[0], accounts_list[i].product_indx)
+                prd = Label(inven_frame, img=img,
+                                          text=f"Seller:{accounts_list[i].get_user_name()} Type:{prod[2]} Price:{prod[3]} Stock:{prod[4]}",
+                                          compound="left")
+                product_list.append(prd)
                 print(prod[0])
                 accounts_list[i].prodcut_list.append(product)
                 print(accounts_list[i].prodcut_list[i].get_name())
-                accounts_list[i].product_indx +=1
-                print("prd number before",prd_key)
+                accounts_list[i].product_indx += 1
+                print("prd number before", prd_key)
                 if prod[0] > prd_key:
                     prd_key = prod[0]
-                    print("prd number after",prd_key)
+                    print("prd number after", prd_key)
                 else:
                     pass
 
-
-
             conn.commit()
-    prd_key +=1
+    prd_key += 1
     print("prd last ", prd_key)
     c.close()
     c2.close()
