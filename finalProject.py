@@ -119,9 +119,24 @@ class Accounts():
     def add_product(self, product_img, product_name, product_price, product_stock, seller_contact):
         global prd_key
         global user_index
+        conn = sqlite3.connect("Products.db")
+        c =  conn.cursor()
+        c.execute("SELECT * FROM products")
+        key = 0
+        for x in c.fetchall():
+            key = x[0]
+        print("key = ",key)
+        if key < prd_key:
+            prd_key = key + 1
+            print("prd key  change", prd_key)
+        conn.commit()
+        conn.close()
+        print("prd before adding",prd_key)
         product = Products(product_img, product_name, product_price, product_stock, seller_contact, user_index,prd_key,self.product_indx)
         product.save()
         accounts_list[user_index].prodcut_list.append(product)
+        prd_key+=1
+        print("prd after adding ",prd_key)
         window.update()
         self.product_indx+=1
 
@@ -168,7 +183,6 @@ class Accounts():
         for items in self.prodcut_list:
             for carts in items.transaction_list:
                 carts.pack_forget()
-
 
 class Products(Accounts):
     def __init__(self, product_imgg, product_type, product_price, product_stock, seller_contact, product_index, id_num,prd_indx):
@@ -407,17 +421,17 @@ class Products(Accounts):
         return self.product_price
 
     def remove_product(self):
+        print("prd remove",self.id_num)
         self.myproduct_container.pack_forget()
         conn = sqlite3.connect("Products.db")
         c = conn.cursor()
         delete = f"DElETE FROM products WHERE id={self.id_num}"
         c.execute(delete)
         rev(self.product_indx)
-       
+
         conn.commit()
         conn.close()
         window.update()
-
     def get_address(self):
         return self.seller_address
 
@@ -464,8 +478,15 @@ def product_validation(product_img, product_type, product_price, product_stock, 
 
 
 def rev(indexx):
-    print(indexx)
-    accounts_list[user_index].prodcut_list.remove(accounts_list[user_index].prodcut_list[indexx-1])
+    print("remove index",indexx)
+
+    accounts_list[user_index].prodcut_list.remove(accounts_list[user_index].prodcut_list[indexx])
+    for item in accounts_list[user_index].prodcut_list:
+        if len(accounts_list[user_index].prodcut_list) == 0:
+            pass
+        else:
+            item.product_indx -= 1
+    print("new len of list",len(accounts_list[user_index].prodcut_list))
     window.update()
 
 
@@ -765,8 +786,10 @@ def restore():
                 accounts_list[i].prodcut_list.append(product)
                 print(accounts_list[i].prodcut_list[i].get_name())
                 accounts_list[i].product_indx +=1
+                print("prd number before",prd_key)
                 if prod[0] > prd_key:
                     prd_key = prod[0]
+                    print("prd number after",prd_key)
                 else:
                     pass
 
@@ -774,6 +797,7 @@ def restore():
 
             conn.commit()
     prd_key +=1
+    print("prd last ", prd_key)
     c.close()
     c2.close()
 
