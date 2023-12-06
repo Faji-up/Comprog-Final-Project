@@ -88,6 +88,20 @@ trans_pos.Y_POSITION = 90
 trans_pos.SCROLL_Y_VAL_OF_PRDCTS = 110
 trans_pos.X_POSITION = 200
 
+admin_accs_pos = Constant_scroll_pos() #constant for scroll Y_POSITION of searched page
+admin_accs_pos.Y_POSITION = 90
+admin_accs_pos.SCROLL_Y_VAL_OF_PRDCTS = 90
+admin_accs_pos.X_POSITION = 200
+
+admin_inven_pos = Constant_scroll_pos() #constant for scroll Y_POSITION of searched page
+admin_inven_pos.Y_POSITION = 90
+admin_inven_pos.SCROLL_Y_VAL_OF_PRDCTS = 90
+admin_inven_pos.X_POSITION = 200
+
+admin_trans_pos = Constant_scroll_pos() #constant for scroll Y_POSITION of searched page
+admin_trans_pos.Y_POSITION = 90
+admin_trans_pos.SCROLL_Y_VAL_OF_PRDCTS = 90
+admin_trans_pos.X_POSITION = 200
 
 ################################################################
 def size_check():
@@ -182,24 +196,6 @@ class Accounts():
 
         self.history_scroll = 100
 
-    def show_info(self):
-        """
-        Display information about a user in a graphical user interface.
-        """
-        user_frame = LabelFrame(users_frame)
-        user_frame.pack(side='left')
-
-        user_image = Label(user_frame, image=self.id_pic)
-        user_image.pack()
-
-        user_name = Label(user_frame, text=f"Name : {self.name}")
-        user_name.pack()
-
-        user_address = Label(user_frame, text=f"Address : {self.address}")
-        user_address.pack()
-
-        user_DATE = Label(user_frame, text=f"School : {self.date}")
-        user_DATE.pack()
     def unpack_view_Prof(self):
         for prod in self.user_product_list:
             prod.unview_profile()
@@ -265,6 +261,8 @@ class Accounts():
         product = Products(sqlite3.Binary(product_img), product_name, product_price, product_stock, seller_contact,
                            user_index, prd_key,
                            self.product_indx)
+        product.display_to_myproduct_frame()
+        product.show_profile_frame(self.id_pic,self.name,self.address)
         product.save()
 
         current_user().user_product_list.append(product)
@@ -359,6 +357,7 @@ class Products(Accounts):
         self.covert_to_img = Image.open(io.BytesIO(image_of_product))
         self.covert_to_img = self.covert_to_img.resize((130, 130))
         convert_to_img = create_img(io.BytesIO(image_of_product),130, 130)
+        self.product_image_self = create_img(io.BytesIO(image_of_product),100,100)
         self.product_image_His = create_img(io.BytesIO(image_of_product),150,150)
 
         # image for buy frame
@@ -438,16 +437,7 @@ class Products(Accounts):
         # trasaction history list
         # ============================================================ create seller profile frame
         self.frame = Canvas(user_frame)
-        # self.label = Label(self.frame, image=self.id_pic)
-        self.con = Canvas(self.frame, highlightbackground="black", highlightcolor="black", highlightthickness=2, bd=1,
-                          width=280, height=350)
-        self.con.create_image(200, 280, image=wel_bg)
-        self.con.create_image(140, 100, image=self.id_pic)
-        self.back_to_btn = self.frame.create_image(20, 20, image=back_to_img)
-        self.frame.tag_bind(self.back_to_btn, "<Button>", lambda event: self.profile_unview())  # back button
-        self.con.create_text(140, 210, font=("Monoscape", 20, "bold"), text=f"{self.get_user_name()}")
-        self.con.create_text(170, 240, font=("Monoscape", 15, "bold"), text=f"{self.get_user_address()}")
-        self.con.place(x=60, y=100)
+
         # self.button_exit_prof = Button(self.frame, command=self.profile_unview, text="X")
 
         # self.info_label = Label(self.frame,
@@ -457,17 +447,7 @@ class Products(Accounts):
         # self.button_exit_prof.pack()
         # ============================================================
         # myproducts frame
-        self.myproduct_container = Canvas(current_user().my_products_frame)
-        self.myproduct_image_f = Label(self.myproduct_container, image=self.product_image)
-        self.my_Pinfo = Label(self.myproduct_container,
-                              text=f"Type: {self.product_type} Price: {self.product_price} Stock: {self.product_stock}")
-        self.selfindex = product_index
-        self.remove_button = Button(self.myproduct_container, text='remove',
-                                    command=lambda: self.remove_product())
-        #self.my_Pinfo.pack()
-        self.myproduct_image_f.pack()
-        #self.remove_button.pack()
-
+        self.myproduct_container = None
         # date delivever
         self.time_of_deliver = datetime.now().date().today() + timedelta(days=(int(_time.tm_wday) + 7))
 
@@ -569,6 +549,71 @@ class Products(Accounts):
         conn.commit()
         conn.close()
         window.update()
+    def show_profile_frame(self,image,username,address):
+        # self.label = Label(self.frame, image=self.id_pic)
+        self.con = Canvas(self.frame, highlightbackground="black", highlightcolor="black", highlightthickness=2, bd=1,
+                          width=280, height=350)
+        self.con.create_image(200, 280, image=wel_bg)
+        self.con.create_image(140, 100, image=image)
+        self.back_to_btn = self.frame.create_image(20, 20, image=back_to_img)
+        self.frame.tag_bind(self.back_to_btn, "<Button>", lambda event: self.profile_unview())  # back button
+        self.con.create_text(140, 210, font=("Monoscape", 20, "bold"), text=f"{username}")
+        self.con.create_text(170, 240, font=("Monoscape", 15, "bold"), text=f"{address}")
+        self.con.place(x=60, y=100)
+    def display_to_myproduct_frame(self):
+        self.myproduct_container = Canvas(current_user().my_products_frame, width=WINDOW_WIDTH - 40)
+
+        myproduct_img = Label(self.myproduct_container, image=self.product_image_self,
+                              highlightcolor="black",
+                              highlightthickness=2,
+                              highlightbackground="black")
+        myproduct_img.image = self.product_image_self
+
+        # cart_user_frame.create_text(250,100,text="hahaha")
+
+        text_label_MyP = Canvas(self.myproduct_container, width=175, height=200, highlightcolor="black",
+                                highlightbackground="black", highlightthickness=2)
+        text_label_MyP.create_image(88, 100, image=img_bg_txt)
+        text_label_MyP.create_text(80, 50, font=('Times', 10),
+                                   text=f"Type:{self.product_type}\nPrice:{self.product_price}\nStock:{self.product_stock}")
+        text_label_MyP.pack(side='right')
+        frame_id = current_user().my_products_frame.create_window(
+            current_user().my_prod_pos.X_POSITION,
+            current_user().my_prod_pos.Y_POSITION,
+            width=WINDOW_WIDTH - 111,
+            window=self.myproduct_container,
+            height=100)
+        history_id_list.append(frame_id)
+        myproduct_img.pack(side='left')
+
+        # create binding function for background
+        self.myproduct_container.bind_all("<Configure>",
+                                    lambda e: self.myproduct_container.configure(
+                                        scrollregion=self.myproduct_container.bbox("all")))
+        self.myproduct_container.bind("<MouseWheel>", current_user().myP_frame_wheel)
+        text_label_MyP.bind_all("<Configure>",
+                                lambda e: self.myproduct_container.configure(
+                                    scrollregion=self.myproduct_container.bbox("all")))
+        text_label_MyP.bind("<MouseWheel>", current_user().myP_frame_wheel)
+        current_user().myP_background.bind_all("<Configure>",
+                                                         lambda e: self.myproduct_container.configure(
+                                                             scrollregion=self.myproduct_container.bbox("all")))
+        current_user().myP_background.bind("<MouseWheel>", current_user().myP_frame_wheel)
+        myproduct_img.bind_all("<Configure>",
+                               lambda e: self.myproduct_container.configure(
+                                   scrollregion=self.myproduct_container.bbox("all")))
+        myproduct_img.bind("<MouseWheel>", current_user().myP_frame_wheel)
+
+        current_user().my_products_frame.bind_all("<Configure>",
+                                                            lambda e: self.myproduct_container.configure(
+                                                                scrollregion=self.myproduct_container.bbox("all")))
+        current_user().my_products_frame.bind("<MouseWheel>", current_user().myP_frame_wheel)
+        # add cart to user window
+        current_user().my_prod_pos.SCROLL_Y_VAL_OF_PRDCTS += 120
+        current_user().my_prod_pos.Y_POSITION += 120
+        update_scroll_Y(current_user().my_products_frame,
+                        current_user().my_prod_pos.SCROLL_Y_VAL_OF_PRDCTS)
+
 
     def display_to_search_frame(self):
         global product_pos
@@ -632,15 +677,6 @@ class Products(Accounts):
         product_frame.yview_scroll(-1 * (event.delta // 120), "units")
         print("bindd")
 
-    def unshow(self):
-        """
-        Hide the product image, product information, product container, and remove button from the user interface.
-        """
-        self.myproduct_image_f.pack_forget()
-        self.my_Pinfo.pack_forget()
-        self.myproduct_container.pack_forget()
-        self.remove_button.pack_forget()
-
     def unpack(self):
         """
         Hide the product container and the myproduct container by removing them from the display.
@@ -659,7 +695,6 @@ class Products(Accounts):
             c.execute(delete)
             conn.commit()
             conn.close()
-            self.my_Pinfo.config(text=f"SOLD OUT")
             conn.commit()
             conn.close()
         else:
@@ -1031,6 +1066,7 @@ def save_account(id_pic, name, address, username, password):
             img = img.resize((60, 60))
             img = ImageTk.PhotoImage(img)
             account = Accounts(id_pic, name, address, username, password)
+            show_acc_to_admin(img,name,address)
             accounts_list.append(account)
             with open(id_pic, 'rb') as image_file:
                 id_picture = image_file.read()
@@ -1060,6 +1096,80 @@ def sign_in_validation(id_pic, name, address, username, password):
 
 #######################  ADMIN
 
+#==============================================================================================================================
+def show_acc_to_admin(id_pic,name,address):
+    """
+    Display information about a user in a graphical user interface.
+    """
+    acc_frame_con = Canvas(users_frame,bg='red')
+
+    users_frame.create_window(admin_accs_pos.X_POSITION,admin_accs_pos.Y_POSITION,window=acc_frame_con,width=350,height=40)
+
+    acc_frame_con.bind_all("<Configure>",
+                                lambda e: acc_frame_con.configure(
+                                    scrollregion=acc_frame_con.bbox("all")))
+    acc_frame_con.bind("<MouseWheel>", accounts_frame_wheel)
+
+    users_frame.bind_all("<Configure>",lambda e: acc_frame_con.configure(
+                                                                       scrollregion=acc_frame_con.bbox("all")))
+    users_frame.bind("<MouseWheel>", accounts_frame_wheel)
+    admin_accs_pos.SCROLL_Y_VAL_OF_PRDCTS+=60
+    admin_accs_pos.Y_POSITION += 50
+
+    update_scroll_Y(users_frame,admin_accs_pos.SCROLL_Y_VAL_OF_PRDCTS)
+def accounts_frame_wheel(event):
+    users_frame.yview_scroll(-1 * (event.delta // 120), "units")
+#================================================================================================================================
+def show_inven_to_admin(product_img,product_type,product_price,product_stock):
+    """
+    Display information about a user in a graphical user interface.
+    """
+    inven_frame_con = Canvas(inven_frame,bg='red')
+
+    inven_frame.create_window(admin_inven_pos.X_POSITION,admin_inven_pos.Y_POSITION,window=inven_frame_con,width=350,height=40)
+
+    inven_frame_con.bind_all("<Configure>",
+                                lambda e: inven_frame_con.configure(
+                                    scrollregion=inven_frame_con.bbox("all")))
+    inven_frame_con.bind("<MouseWheel>", inven_frame_wheel)
+
+    inven_frame.bind_all("<Configure>",lambda e: inven_frame_con.configure(
+                                                                       scrollregion=inven_frame_con.bbox("all")))
+    inven_frame.bind("<MouseWheel>", inven_frame_wheel)
+    admin_inven_pos.SCROLL_Y_VAL_OF_PRDCTS+=60
+    admin_inven_pos.Y_POSITION += 50
+
+    update_scroll_Y(inven_frame,admin_inven_pos.SCROLL_Y_VAL_OF_PRDCTS)
+
+def inven_frame_wheel(event):
+    inven_frame.yview_scroll(-1 * (event.delta // 120), "units")
+
+#================================================================================================================================
+def show_trans_to_admin(product_img,seller,buyer,type,payment,dod,code):
+    """
+    Display information about a user in a graphical user interface.
+    """
+    trans_frame_con = Canvas(admin_tran_frame,bg='red')
+
+    admin_tran_frame.create_window(admin_trans_pos.X_POSITION,admin_trans_pos.Y_POSITION,window=trans_frame_con,width=350,height=40)
+
+    trans_frame_con.bind_all("<Configure>",
+                                lambda e: trans_frame_con.configure(
+                                    scrollregion=trans_frame_con.bbox("all")))
+    trans_frame_con.bind("<MouseWheel>", trans_frame_wheel)
+
+    admin_tran_frame.bind_all("<Configure>",lambda e: trans_frame_con.configure(
+                                                                       scrollregion=trans_frame_con.bbox("all")))
+    admin_tran_frame.bind("<MouseWheel>", trans_frame_wheel)
+    admin_trans_pos.SCROLL_Y_VAL_OF_PRDCTS+=60
+    admin_trans_pos.Y_POSITION += 50
+
+    update_scroll_Y(admin_tran_frame,admin_trans_pos.SCROLL_Y_VAL_OF_PRDCTS)
+
+def trans_frame_wheel(event):
+    admin_tran_frame.yview_scroll(-1 * (event.delta // 120), "units")
+
+#================================================================================================================================
 def admin():
     size_check()
     global product_list
@@ -1067,31 +1177,6 @@ def admin():
     unpack_window(log_in_canvas)
     pack_window(admin_frame)
 
-    conn = sqlite3.connect('Accounts.db')
-    c = conn.cursor()
-
-    c.execute("SELECT * FROM accounts ")
-    for acc in c.fetchall():
-        imga = Image.open(io.BytesIO(acc[1]))
-        imga = imga.resize((60, 60))
-        imgs = ImageTk.PhotoImage(imga)
-        container = LabelFrame(users_frame)
-        pro_img = Label(container, image=imgs)
-        pro_img.image = imgs
-        infos = Label(container, text=f"NO# {acc[0]} Name: {acc[2]}Address: {acc[3]}")
-        container.pack()
-        pro_img.pack()
-        infos.pack()
-
-    # user_infos = Label(users_frame,text=f"Name: {ac[1]}\nAge: {ac[2]}\nAddress: {ac[3]}")
-    # user_infos.pack()
-    conn.commit()
-    conn.close()
-    for products in product_list:
-        products.pack()
-    # product_list[0].pack()
-    for items in transaction_list:
-        Label(admin_tran_frame, text=items).pack()
 
 
 def users(event):
@@ -1214,15 +1299,16 @@ def myproducts(event):
     size_check()
     unpack_all_frame_in_userframe()
 
-    for item in current_user().user_product_list:
-        item.show_user_products()
+    #for item in current_user().user_product_list:
+     #   item.show_user_products()
 
-    for items in accounts_list:
-        if items == current_user() and len(current_user().user_product_list) != 0:
-            items.show_user_products()
-            window.update()
-        else:
-            items.unshow_my_products()
+   # for items in accounts_list:
+    #    if items == current_user() and len(current_user().user_product_list) != 0:
+     #       items.show_user_products()
+      #      window.update()
+       # else:
+        #    items.unshow_my_products()
+    current_user().my_products_frame.pack(fill=BOTH, expand=True, side='bottom')  # show user transaction
     pack_window(user_products_frame)
 
     for types in search_types_id:
@@ -1292,6 +1378,7 @@ def cart(event):
     global cart_position
     size_check()
     unpack_all_frame_in_userframe()
+    current_user().my_cart_frame.pack(fill=BOTH, expand=True, side='bottom')  # show user transaction
     pack_window(cart_main_frame)
 
     for types in search_types_id:
@@ -1389,13 +1476,15 @@ def restore_db_to_list():
         c - the cursor object for executing SQL queries
         accounts_list - a list of Account objects
         """
-        img = Image.open(io.BytesIO(acc[1]))
-        img = img.resize((180, 260))
-        img = ImageTk.PhotoImage(img)
+
+
+        img = create_img(io.BytesIO(acc[1]),180,260)
+        img2 = create_img(io.BytesIO(acc[1]),80,100)
 
         account = Accounts(img, acc[2], acc[3], acc[4], acc[5])
         accounts_list.append(account)
         print("name user:", accounts_list[index].get_user_name())
+        show_acc_to_admin(img2,acc[2],acc[3])
         index += 1
     print("account len is ", len(accounts_list))
 
@@ -1415,6 +1504,7 @@ def restore_db_to_list():
                 img = create_img(io.BytesIO(prod[1]),100,100)
                 product = Products(prod[1], prod[2], prod[3], prod[4], prod[5], acc_index, prod[0],
                                   accounts_list[acc_index].product_indx)
+                product.show_profile_frame(accounts_list[acc_index].id_pic,accounts_list[acc_index].get_user_name(),accounts_list[acc_index].get_user_address())
                 #prd = Label(inven_frame, image=img,
                  #           text=f"Seller:{accounts_list[acc_index].get_user_name()} Type:{prod[2]} Price:{prod[3]} Stock:{prod[4]}",
                   #          compound="left")
@@ -1483,8 +1573,9 @@ def restore_db_to_list():
                 accounts_list[acc_index].my_prod_pos.SCROLL_Y_VAL_OF_PRDCTS += 120
                 accounts_list[acc_index].my_prod_pos.Y_POSITION += 120
                 update_scroll_Y(accounts_list[acc_index].my_products_frame, accounts_list[acc_index].my_prod_pos.SCROLL_Y_VAL_OF_PRDCTS)
-
-
+                #==========================================================================================================================
+                show_inven_to_admin(img,prod[2],prod[3],prod[4])
+                #==========================================================================================================================
 
             conn.commit()
     prd_key += 1
@@ -1563,6 +1654,8 @@ def restore_db_to_list():
                 trans_pos.Y_POSITION += 190
                 update_scroll_Y(accounts_list[user_id].mytransaction_frame, trans_pos.SCROLL_Y_VAL_OF_PRDCTS)
                 print('gwrtygwhg')
+                #============================================================================================================
+                show_trans_to_admin(tran_img,_tran[2],_tran[3],_tran[4],_tran[5],_tran[6],_tran[7])
 
     conn2.close()
     conn3.close()
@@ -1781,7 +1874,15 @@ def search_type():
     NUMBER_OF_SEARCH = 0
     for acc in accounts_list:
         for prds in acc.user_product_list:
-            if search_val.upper() == prds.get_name().upper() or str(search_val).upper() == str(prds.get_price()).upper():
+            if ((search_val.upper() == prds.get_name().upper() or
+                    str(search_val).upper() == str(prds.get_price()).upper()) or
+                    str(search_val).upper().replace(" ","") == str(prds.get_name()).upper().replace(" ","") or
+                    str(search_val).upper().replace(" ","") == str(str(prds.get_name()) + str(prds.get_price())).upper().replace(" ","")):
+
+                # search_frame.create_window((220, Y_POSITION), window=type_W,width=350,height=300)
+                prds.display_to_search_frame()
+                NUMBER_OF_SEARCH += 1
+            elif (search_val).upper() in str(prds.get_name()).upper():
                 # search_frame.create_window((220, Y_POSITION), window=type_W,width=350,height=300)
                 prds.display_to_search_frame()
                 NUMBER_OF_SEARCH += 1
@@ -1835,6 +1936,7 @@ img_bg_txt = create_img('donwloadimages/Grey cow print.jpg',175,200)
 # BACKGROUND IMAGE
 user_frame_bg_img = create_img('donwloadimages/white_bg.jpg',WINDOW_WIDTH, 540)
 
+admin_frame_bg_img = create_img('donwloadimages/white_bg.jpg',WINDOW_WIDTH, 540)
 
 ########################## ADMIN WINDOW
 
@@ -2199,7 +2301,6 @@ profile_pic.place(x=110,y=70)
 user_information = profile_frame.create_text(180,420,text='',font=("Times",15))
 
 #========================================================================================= PRODUCTS WINDOW FRAME
-
 
 # container image
 con_bg_img = create_img('images/productcont.jpg',170, 170)
